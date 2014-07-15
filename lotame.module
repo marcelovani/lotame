@@ -123,3 +123,22 @@ function _lotame_get_script_url() {
   return $url;
 }
 
+/**
+ * Implements hook_preprocess_html().
+ */
+function lotame_preprocess_html(&$vars) {
+  $client_id = _lotame_get_client_id();
+
+  if (!empty($client_id) && _lotame_visibility_pages()) {
+    $options = array(
+      'every_page' => TRUE,
+      'scope' => 'footer',
+      'type' => 'external',
+    );
+    drupal_add_js(_lotame_get_script_url(), $options);
+
+    $options['type'] = 'inline';
+    drupal_add_js('if (typeof(_cc' . $client_id .') === "object") _cc' . $client_id . '.bcp();', $options);
+  }
+}
+
