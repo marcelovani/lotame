@@ -29,6 +29,7 @@ function lotame_settings_form() {
   $form['lotame_client_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Lotame Client ID'),
+    '#size' => 4,
     '#default_value' => variable_get('lotame_client_id', ''),
     '#required' => TRUE,
   );
@@ -65,4 +66,31 @@ function lotame_settings_form() {
   );
 
   return system_settings_form($form);
+}
+
+/**
+ * Function to determine if code should be printed on the current page.
+ */
+function _lotame_visibility_pages() {
+  $visibility = variable_get('lotame_visibility', 0);
+  $pages = variable_get('lotame_pages', 'admin/*' . PHP_EOL);
+
+  // Match path if necessary.
+  if (!empty($pages)) {
+    $path = drupal_get_path_alias($_GET['q']);
+    // Compare with the internal and path alias (if any).
+    $page_match = drupal_match_path($path, $pages);
+    if ($path != $_GET['q']) {
+      $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+    }
+    // When $visibility has a value of 0, the block is displayed on
+    // all pages except those listed in $pages. When set to 1, it
+    // is displayed only on those pages listed in $pages.
+    $page_match = !($visibility xor $page_match);
+  }
+  else {
+    $page_match = TRUE;
+  }
+
+  return $page_match;
 }
