@@ -102,3 +102,24 @@ function _lotame_visibility_pages() {
   return $page_match;
 }
 
+/**
+ * Helper to return the client id.
+ */
+function _lotame_get_client_id() {
+  return check_plain(variable_get('lotame_client_id', ''));
+}
+
+/**
+ * Helper to process the script url.
+ */
+function _lotame_get_script_url() {
+  $url = check_plain(variable_get('lotame_url', 'http://tags.crwdcntrl.net/c/[ID]/cc.js?ns=_cc[ID]'));
+
+  // Adjust protocol.
+  $url = ($GLOBALS['is_https'] ? "https://" : "http://") . preg_replace("(https?://)", "", $url );
+
+  // Swap Client ID token.
+  $url = str_replace('[ID]', _lotame_get_client_id(), $url);
+  return $url;
+}
+
