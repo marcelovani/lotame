@@ -30,7 +30,14 @@ function lotame_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Lotame Client ID'),
     '#size' => 4,
-    '#default_value' => variable_get('lotame_client_id', ''),
+    '#default_value' => _lotame_get_client_id(),
+    '#required' => TRUE,
+  );
+  $form['lotame_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Lotame URL'),
+    '#description' => t('The URL for the Lotame integration. Available tokenL [ID] = Client ID.'),
+    '#default_value' => check_plain(variable_get('lotame_url', 'http://tags.crwdcntrl.net/c/[ID]/cc.js?ns=_cc[ID]')),
     '#required' => TRUE,
   );
 
@@ -94,3 +101,4 @@ function _lotame_visibility_pages() {
 
   return $page_match;
 }
+
