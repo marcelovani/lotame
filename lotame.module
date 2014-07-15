@@ -7,13 +7,13 @@
 /**
  * Implements hook_menu().
  */
-function notame_menu() {
+function lotame_menu() {
   $items = array();
-  $items['admin/config/system/notame'] = array(
+  $items['admin/config/system/lotame'] = array(
     'title' => 'Lotame',
     'description' => 'Configure Lotame.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('notame_settings_form'),
+    'page arguments' => array('lotame_settings_form'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -23,13 +23,45 @@ function notame_menu() {
 /**
  * Implements hook_form().
  */
-function notame_settings_form() {
+function lotame_settings_form() {
   $form = array();
-  $form['notame_client_id'] = array(
+
+  $form['lotame_client_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Lotame Client ID'),
-    '#default_value' => variable_get('notame_client_id', ''),
+    '#default_value' => variable_get('lotame_client_id', ''),
     '#required' => TRUE,
+  );
+
+  $options = array(
+    t('On every page except the listed pages.'), t('On the listed pages only.'),
+  );
+
+  $text = 'Enter one page per line as Drupal paths. The "*" character is a wildcard. ';
+  $text .= 'Example paths are %blog for the blog page and %blog-wildcard for every personal blog. ';
+  $text .= '%front is the front page.';
+  $description = t($text, array(
+      '%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>')
+  );
+
+  $form['lotame_visibility_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Page specific settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['lotame_visibility_settings']['lotame_visibility'] = array(
+    '#type' => 'radios',
+    '#title' => t('Add Lotame script'),
+    '#options' => $options,
+    '#default_value' => variable_get('lotame_visibility', 0),
+  );
+  $form['lotame_visibility_settings']['lotame_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages'),
+    '#default_value' => variable_get('lotame_pages', 'admin/*' . PHP_EOL),
+    '#description' => $description,
+    '#wysiwyg' => FALSE,
   );
 
   return system_settings_form($form);
