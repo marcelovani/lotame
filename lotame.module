@@ -149,7 +149,7 @@ function lotame_preprocess_html_tag(&$vars) {
   // Find Lotame script and add attribute id.
   if (isset($vars['element']['#attributes']['src'])) {
     if (strpos($vars['element']['#attributes']['src'], substr(_lotame_get_script_url(), 7, 20)) !== FALSE) {
-      $vars['element']['#attributes']['id'] = _lotame_get_client_id();
+      $vars['element']['#attributes']['id'] = 'LOTCC_' . _lotame_get_client_id();
     }
   }
 }
