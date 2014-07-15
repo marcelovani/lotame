@@ -1,1 +1,5 @@
 name = Lotame
+description = Integrates Lotame http://www.lotame.com/
+package = Advertising
+core = 7.x
+configure = admin/config/system/lotame

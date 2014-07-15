@@ -1,0 +1,36 @@
+<?php
+/**
+ * @file
+ * Main module file for Lotame
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function notame_menu() {
+  $items = array();
+  $items['admin/config/system/notame'] = array(
+    'title' => 'Lotame',
+    'description' => 'Configure Lotame.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('notame_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form().
+ */
+function notame_settings_form() {
+  $form = array();
+  $form['notame_client_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Lotame Client ID'),
+    '#default_value' => variable_get('notame_client_id', ''),
+    '#required' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
