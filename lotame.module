@@ -67,7 +67,7 @@ function lotame_settings_form() {
   $form['lotame_visibility_settings']['lotame_pages'] = array(
     '#type' => 'textarea',
     '#title' => t('Pages'),
-    '#default_value' => variable_get('lotame_pages', 'admin/*' . PHP_EOL),
+    '#default_value' => _lotame_get_pages(),
     '#description' => $description,
     '#wysiwyg' => FALSE,
   );
@@ -80,7 +80,7 @@ function lotame_settings_form() {
  */
 function _lotame_visibility_pages() {
   $visibility = variable_get('lotame_visibility', 0);
-  $pages = variable_get('lotame_pages', 'admin/*' . PHP_EOL);
+  $pages = _lotame_get_pages();
 
   // Match path if necessary.
   if (!empty($pages)) {
@@ -121,6 +121,25 @@ function _lotame_get_script_url() {
   // Swap Client ID token.
   $url = str_replace('[ID]', _lotame_get_client_id(), $url);
   return $url;
+}
+
+/**
+ * Get lotame include/exclude pages.
+ */
+function _lotame_get_pages() {
+  $default_pages = array(
+    'admin*',
+    'files*',
+    'system/ajax*',
+    'media/browser*',
+    '*/edit',
+    '*/autocomplete*',
+    'node/add*',
+    'batch',
+    'user',
+    'user/*'
+  );
+  return variable_get('lotame_pages', implode(PHP_EOL, $default_pages));
 }
 
 /**
