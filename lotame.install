@@ -7,7 +7,7 @@
 /**
  * Implements hook_uninstall().
  */
-function notame_uninstall() {
+function lotame_uninstall() {
   drupal_variable_del('lotame_client_id');
   drupal_variable_del('lotame_url');
   drupal_variable_del('lotame_visibility');

@@ -2,7 +2,7 @@ Module: Lotame
 
 Description
 ===========
-Lotame integrationb http://www.notame.com
+Lotame integrationb http://www.lotame.com
 
 Installation
 ============
@@ -11,8 +11,8 @@ Copy the module directory in to your Drupal:
 
 Configuration
 =============
-visit admin/config/system/notame
+visit admin/config/system/lotame
 
 Documentation
 =============
-http://notame.com
+http://lotame.com
