@@ -157,6 +157,17 @@ function lotame_preprocess_html(&$vars) {
     drupal_add_js(_lotame_get_script_url(), $options);
 
     $options['type'] = 'inline';
+    $adv_tags = module_invoke_all('get_adv_tags');
+
+    // Add advanced javascript tags.
+    if ($adv_tags) {
+      $js = '';
+      foreach ($adv_tags as $key => $value) {
+        $js .= "_cc" . $client_id . ".add('" . $key . "', '" . $value . "');" . PHP_EOL;;
+      }
+      $js .= '_cc' . $client_id . '.bcp();';
+      drupal_add_js($js, $options);
+    }
     drupal_add_js('if (typeof(_cc' . $client_id .') === "object") _cc' . $client_id . '.bcp();', $options);
   }
 }
