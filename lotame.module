@@ -158,12 +158,28 @@ function lotame_preprocess_html(&$vars) {
 
     $options['type'] = 'inline';
     $adv_tags = module_invoke_all('lotame_get_adv_tags');
-
     // Add advanced javascript tags.
     if ($adv_tags) {
+      $data = _lotame_get_token_data();
       $js = '';
-      foreach ($adv_tags as $key => $value) {
-        $js .= "_cc" . $client_id . ".add('" . $key . "', '" . $value . "');" . PHP_EOL;
+      foreach ($adv_tags as $adv_tag) {
+        $replaced_value = token_replace(check_plain($adv_tag['value']), $data, array('sanitize' => TRUE, 'clear' => TRUE));
+        $values = array_filter(explode(',', $replaced_value));
+
+        if (empty($values)) {
+          continue;
+        }
+
+        // Use the CTAX syntax for multiple values.
+        if (sizeof($values) > 1) {
+          $key = 'ctax';
+          $prefix = check_plain($adv_tag['target']) . '^';
+        } else{
+          $key = 'seg';
+          $prefix = '';
+        }
+
+        $js .= "_cc" . $client_id . ".add('" . $key . "', '" . $prefix . implode('^', $values) . "');" . PHP_EOL;
       }
       $js .= '_cc' . $client_id . '.bcp();';
       drupal_add_js($js, $options);
@@ -182,4 +198,23 @@ function lotame_preprocess_html_tag(&$vars) {
       $vars['element']['#attributes']['id'] = 'LOTCC_' . _lotame_get_client_id();
     }
   }
+}
+
+/**
+ * Prepare token replacement values.
+ *
+ * @return array
+ */
+function _lotame_get_token_data() {
+  global $user;
+
+  $data = array();
+  $data['user'] = $user;
+  $data['node'] = menu_get_object();
+
+  // We cannot use menu_get_object because the views version of the taxonomy
+  // term pages will not work properly.
+  $data['term'] = (arg(0) == 'taxonomy' && arg(1) == 'term' && is_numeric(arg(2))) ? taxonomy_term_load(arg(2)) : NULL;
+
+  return $data;
 }
