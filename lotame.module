@@ -163,7 +163,14 @@ function lotame_preprocess_html(&$vars) {
       $data = _lotame_get_token_data();
       $js = '';
       foreach ($adv_tags as $adv_tag) {
+        // Clean up.
         $replaced_value = token_replace(check_plain($adv_tag['value']), $data, array('sanitize' => TRUE, 'clear' => TRUE));
+        $replaced_value = strtolower($replaced_value);
+        $replaced_value = str_replace(', ', ',', strtolower($replaced_value));
+        $replaced_value = str_replace(' ', '-', strtolower($replaced_value));
+        $replaced_value = str_replace('_', '-', strtolower($replaced_value));
+        $replaced_value = str_replace('-&amp;-', '-', $replaced_value);
+        $replaced_value = preg_replace("/&#?[A-Za-z0-9]+;/i","",$replaced_value);
         $values = array_filter(explode(',', $replaced_value));
 
         if (empty($values)) {
