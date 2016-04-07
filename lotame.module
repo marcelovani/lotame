@@ -164,12 +164,12 @@ function lotame_preprocess_html(&$vars) {
       $js = '';
       foreach ($adv_tags as $adv_tag) {
         // Clean up.
-        $replaced_value = token_replace(check_plain($adv_tag['value']), $data, array('sanitize' => TRUE, 'clear' => TRUE));
+        $adv_tag['value'] = token_replace(check_plain($adv_tag['value']), $data, array('sanitize' => TRUE, 'clear' => TRUE));
 
         // Allow modules to alter tag value.
-        drupal_alter('lotame_tag', $replaced_value);
+        drupal_alter('lotame_tag', $adv_tag);
 
-        $values = array_filter(explode(',', $replaced_value));
+        $values = array_filter(explode(',', $adv_tag['value']));
 
         if (empty($values)) {
           continue;
