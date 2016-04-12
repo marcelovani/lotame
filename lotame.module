@@ -176,10 +176,11 @@ function lotame_preprocess_html(&$vars) {
         }
 
         // Use the CTAX syntax for multiple values.
-        if (sizeof($values) > 1) {
+        if (count($values) > 1) {
           $key = 'ctax';
           $prefix = check_plain($adv_tag['target']) . '^';
-        } else{
+        }
+        else {
           $key = 'seg';
           $prefix = '';
         }
@@ -189,7 +190,7 @@ function lotame_preprocess_html(&$vars) {
       $js .= '_cc' . $client_id . '.bcp();';
       drupal_add_js($js, $options);
     }
-    drupal_add_js('if (typeof(_cc' . $client_id .') === "object") _cc' . $client_id . '.bcp();', $options);
+    drupal_add_js('if (typeof(_cc' . $client_id . ') === "object") _cc' . $client_id . '.bcp();', $options);
   }
 }
 
@@ -216,9 +217,6 @@ function _lotame_get_token_data() {
   $data = array();
   $data['user'] = $user;
   $data['node'] = menu_get_object();
-
-  // We cannot use menu_get_object because the views version of the taxonomy
-  // term pages will not work properly.
   $data['term'] = (arg(0) == 'taxonomy' && arg(1) == 'term' && is_numeric(arg(2))) ? taxonomy_term_load(arg(2)) : NULL;
 
   return $data;
