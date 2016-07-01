@@ -158,34 +158,32 @@ function lotame_preprocess_html(&$vars) {
 
     $options['type'] = 'inline';
     $adv_tags = module_invoke_all('lotame_adv_tags');
+
     // Add advanced javascript tags.
     if ($adv_tags) {
       $data = _lotame_get_token_data();
       $js = '';
       foreach ($adv_tags as $adv_tag) {
-        // Clean up.
-        $adv_tag['value'] = token_replace(check_plain($adv_tag['value']), $data, array('sanitize' => TRUE, 'clear' => TRUE));
+        foreach ($adv_tag as $key => $value) {
 
-        // Allow modules to alter tag value.
-        drupal_alter('lotame_tag', $adv_tag);
+          // Clean up.
+          $value = token_replace(check_plain($value), $data, array(
+            'sanitize' => TRUE,
+            'clear' => TRUE
+          ));
 
-        $values = array_filter(explode(',', $adv_tag['value']));
+          // Allow modules to alter tag value.
+          drupal_alter('lotame_tag', $value);
 
-        if (empty($values)) {
-          continue;
+          if (empty($value)) {
+            continue;
+          }
+
+          // Set the key
+          $key = isset($key) ? $key : 'seg';
+          // Set js tag for kvp
+          $js .= "_cc" . $client_id . ".add('" . $key . "', '" . $value . "');" . PHP_EOL;
         }
-
-        // Use the CTAX syntax for multiple values.
-        if (count($values) > 1) {
-          $key = 'ctax';
-          $prefix = check_plain($adv_tag['target']) . '^';
-        }
-        else {
-          $key = 'seg';
-          $prefix = '';
-        }
-
-        $js .= "_cc" . $client_id . ".add('" . $key . "', '" . $prefix . implode('^', $values) . "');" . PHP_EOL;
       }
       $js .= '_cc' . $client_id . '.bcp();';
       drupal_add_js($js, $options);
