@@ -157,6 +157,7 @@ function lotame_preprocess_html(&$vars) {
       'every_page' => TRUE,
       'scope' => 'footer',
       'type' => 'external',
+      'weight' => 100,
     );
     drupal_add_js(_lotame_get_script_url(), $options);
 
