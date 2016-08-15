@@ -161,37 +161,6 @@ function lotame_preprocess_html(&$vars) {
     drupal_add_js(_lotame_get_script_url(), $options);
 
     $options['type'] = 'inline';
-    $adv_tags = module_invoke_all('lotame_adv_tags');
-
-    // Add advanced javascript tags.
-    if ($adv_tags) {
-      $data = _lotame_get_token_data();
-      $js = '';
-      foreach ($adv_tags as $adv_tag) {
-        foreach ($adv_tag as $key => $value) {
-
-          // Clean up.
-          $value = token_replace(check_plain($value), $data, array(
-            'sanitize' => TRUE,
-            'clear' => TRUE
-          ));
-
-          // Allow modules to alter tag value.
-          drupal_alter('lotame_tag', $value);
-
-          if (empty($value)) {
-            continue;
-          }
-
-          // Set the key
-          $key = isset($key) ? $key : 'seg';
-          // Set js tag for kvp
-          $js .= "_cc" . $client_id . ".add('" . $key . "', '" . $value . "');" . PHP_EOL;
-        }
-      }
-      $js .= '_cc' . $client_id . '.bcp();';
-      drupal_add_js($js, $options);
-    }
     drupal_add_js('if (typeof(_cc' . $client_id . ') === "object") _cc' . $client_id . '.bcp();', $options);
   }
 }
