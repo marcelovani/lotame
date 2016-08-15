@@ -30,7 +30,7 @@ function lotame_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Lotame Client ID'),
     '#size' => 4,
-    '#default_value' => _lotame_get_client_id(),
+    '#default_value' => lotame_get_client_id(),
     '#required' => TRUE,
   );
   $form['lotame_url'] = array(
@@ -78,7 +78,11 @@ function lotame_settings_form() {
 /**
  * Function to determine if code should be printed on the current page.
  */
-function _lotame_visibility_pages() {
+function lotame_visibility_pages() {
+  if (path_is_admin(current_path())) {
+    return;
+  }
+
   $visibility = variable_get('lotame_visibility', 0);
   $pages = _lotame_get_pages();
 
@@ -105,7 +109,7 @@ function _lotame_visibility_pages() {
 /**
  * Helper to return the client id.
  */
-function _lotame_get_client_id() {
+function lotame_get_client_id() {
   return check_plain(variable_get('lotame_client_id', ''));
 }
 
@@ -119,7 +123,7 @@ function _lotame_get_script_url() {
   $url = ($GLOBALS['is_https'] ? "https://" : "http://") . preg_replace("(https?://)", "", $url );
 
   // Swap Client ID token.
-  $url = str_replace('[ID]', _lotame_get_client_id(), $url);
+  $url = str_replace('[ID]', lotame_get_client_id(), $url);
   return $url;
 }
 
@@ -146,9 +150,9 @@ function _lotame_get_pages() {
  * Implements hook_preprocess_html().
  */
 function lotame_preprocess_html(&$vars) {
-  $client_id = _lotame_get_client_id();
+  $client_id = lotame_get_client_id();
 
-  if (!empty($client_id) && _lotame_visibility_pages()) {
+  if (!empty($client_id) && lotame_visibility_pages()) {
     $options = array(
       'every_page' => TRUE,
       'scope' => 'footer',
@@ -199,7 +203,7 @@ function lotame_preprocess_html_tag(&$vars) {
   // Find Lotame script and add attribute id.
   if (isset($vars['element']['#attributes']['src'])) {
     if (strpos($vars['element']['#attributes']['src'], substr(_lotame_get_script_url(), 7, 20)) !== FALSE) {
-      $vars['element']['#attributes']['id'] = 'LOTCC_' . _lotame_get_client_id();
+      $vars['element']['#attributes']['id'] = 'LOTCC_' . lotame_get_client_id();
     }
   }
 }
@@ -209,7 +213,7 @@ function lotame_preprocess_html_tag(&$vars) {
  *
  * @return array
  */
-function _lotame_get_token_data() {
+function lotame_get_token_data() {
   global $user;
 
   $data = array();
