@@ -3,3 +3,294 @@
  * @file
  * Code for the module.
  */
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function lotame_adv_tags_preprocess_html(&$vars) {
+  $client_id = lotame_get_client_id();
+
+  if (!empty($client_id) && lotame_visibility_pages()) {
+
+    // Load default patterns. //@todo create UI with storage for this.
+    $patterns = module_invoke_all('lotame_adv_tags_default_patterns');
+
+    // Allow modules to alter the patterns and add some extra logic if needed.
+    drupal_alter('lotame_adv_tags_default_patterns', $patterns);
+
+    // Process patterns.
+    $processed_patterns = _lotame_adv_tags_process_patterns($patterns);
+
+    // Add advanced javascript tags.
+    _lotame_adv_tags_output_js($processed_patterns);
+  }
+}
+
+/**
+ * Implements hook_dfp_global_targeting_alter().
+ */
+function lotame_adv_tags_dfp_global_targeting_alter(&$targeting) {
+  // Store the DFP global targeting statically, to be retrieved later.
+  $static = &drupal_static('lotame_adv_tags_dfp_targeting');
+  $static = $targeting;
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function lotame_adv_tags_module_implements_alter(&$implementations, $hook) {
+  // Make lotame_adv_tags run last.
+  if ($hook == 'dfp_global_targeting_alter') {
+    $group = $implementations['lotame_adv_tags'];
+    unset($implementations['lotame_adv_tags']);
+    $implementations['lotame_adv_tags'] = $group;
+  }
+}
+
+/**
+ * Helper to build the js tag.
+ *
+ * @param        $tag The rendered pattern.
+ * @param string $behaviour_type Behaviour type i.e. ctax, seg, age, geo, etc.
+ *
+ * @return string Lotame advanced tag.
+ */
+function _lotame_adv_tags_build_tag($tag, $behaviour_type = 'ctax') {
+  $client_id = lotame_get_client_id();
+
+  return "_cc" . $client_id . ".add('" . $behaviour_type . "', '" . $tag . "');" . PHP_EOL;
+}
+
+/**
+ * Helper to output the javascript on the page.
+ *
+ * @param $tags The processed patterns.
+ */
+function _lotame_adv_tags_output_js($tags) {
+  if (empty($tags)) {
+    return;
+  }
+
+  $js = implode("\n", $tags);
+
+  // Token replace for global tokens.
+  $js = token_replace($js, lotame_get_token_data(), array(
+    'sanitize' => TRUE,
+    'clear' => TRUE
+  ));
+
+  $options = array(
+    'every_page' => TRUE,
+    'scope' => 'footer',
+    'type' => 'inline',
+    'weight' => 10,
+  );
+  drupal_add_js($js, $options);
+}
+
+/**
+ * Helper to retrieve the statically cached dfp tags.
+ *
+ * @return array $targeting The dfp targeting.
+ */
+function _lotame_adv_tags_get_dfp_targeting() {
+  $targeting = array();
+  $dfp_kvp = drupal_static('lotame_adv_tags_dfp_targeting');
+  foreach ($dfp_kvp as $kvp) {
+    $targeting[$kvp['target']] = ucfirst($kvp['value']);
+  }
+
+  return $targeting;
+}
+
+/**
+ * Helper that generates a list of regex patterns to be used when replacing tokens
+ *
+ * @return array
+ */
+function _lotame_adv_tags_get_dfp_targeting_regex() {
+  return array_map(function ($str) {
+    return '~{' . $str . '}~';
+  }, array_keys(_lotame_adv_tags_get_dfp_targeting()));
+}
+
+/**
+ * Renders patterns and creates js tags.
+ *
+ * @param $patterns The Lotame adv tags patterns.
+ *
+ * @return array Tags
+ */
+function _lotame_adv_tags_process_patterns($patterns) {
+  if (empty($patterns)) {
+    return array();
+  }
+
+  $tags = array();
+  $targeting = _lotame_adv_tags_get_dfp_targeting();
+
+  foreach ($patterns as $pattern) {
+    if ($dfp_tokens = _lotame_adv_tags_get_dfp_tokens($pattern)) {
+
+      // Create a list of values for each targeting.
+      // Fields with multiple values will be separated by comma.
+      $values = array();
+      foreach ($dfp_tokens as $target) {
+        if (!isset($targeting[$target])) {
+          continue 2;
+        }
+
+        $value = check_plain($targeting[$target]);
+        $value = token_replace($value, lotame_get_token_data(), array(
+          'sanitize' => TRUE,
+          'clear' => TRUE
+        ));
+
+        // Allow modules to alter the value.
+        drupal_alter('lotame_adv_tag', $value);
+
+        // Build an array of values for each target.
+        $value = explode(',', $value);
+        if (is_array($value)) {
+          // Remove empty values.
+          $value = array_filter($value);
+        }
+        if (!isset($values[$target])) {
+          if (!empty($value)) {
+            $values[$target] = $value;
+          }
+        }
+        else {
+          $values[$target] = array_unique(array_merge($values[$target], $value));
+        }
+      }
+
+      // @TODO write a function to show an error if more than one multi-value
+      // token field is configured on the same pattern. i.e. {categories}^{tags}
+
+      $processed = _lotame_adv_tags_process_pattern($pattern, $values);
+
+      $tags = array_merge($tags, $processed);
+    }
+  }
+
+  $tags = _lotame_adv_tags_post_process_patterns($tags);
+
+  return $tags;
+}
+
+/**
+ * Helper to clean up the processed tags.
+ *
+ * @param $tags The processed tags.
+ *
+ * @return array Cleaned up tags.
+ */
+function _lotame_adv_tags_post_process_patterns($tags) {
+  // Clean entries that did not get replaced with a value. i.e. invalid tokens.
+  foreach ($tags as $key => $pattern) {
+    if (_lotame_adv_tags_get_dfp_tokens($pattern)) {
+      unset($tags[$key]);
+    }
+  }
+
+  // Remove duplicates.
+  $tags = array_unique($tags);
+
+  return $tags;
+}
+
+/**
+ * Helper to process one pattern at a time.
+ *
+ * @param $pattern The pattern.
+ * @param $values The values to be used for the token replacement.
+ *
+ * @return array The processed pattern.
+ */
+function _lotame_adv_tags_process_pattern($pattern, $values) {
+  // Flatten arrays that have only one value.
+  // The array will be processed individually for single and multiple values.
+  foreach ($values as $key => $value) {
+    if (is_array($value) && sizeof($value) == 1) {
+      $values[$key] = reset($value);
+    }
+  }
+
+  // Process patterns that have multi-value fields first.
+  $multi = _lotame_adv_tags_process_multi_value_fields($pattern, $values);
+
+  // Process patterns that have single value fields.
+  $single = _lotame_adv_tags_process_single_value_fields($pattern, $values);
+
+  return array_merge($multi, $single);
+}
+
+/**
+ * Helper to process single value fields.
+ *
+ * @param $pattern The pattern.
+ * @param $values The values.
+ *
+ * @return array Processed pattern.
+ */
+function _lotame_adv_tags_process_single_value_fields($pattern, $values) {
+  $processed = array();
+
+  $dfp_target_patterns = array_map(function ($str) {
+    return '~{' . $str . '}~';
+  }, array_keys($values));
+
+  $tag = preg_replace($dfp_target_patterns, $values, $pattern);
+
+  $processed[] = _lotame_adv_tags_build_tag($tag);
+
+  return $processed;
+}
+
+/**
+ * Helper to process multi-value fields.
+ *
+ * @param $pattern The pattern.
+ * @param $values The values.
+ *
+ * @return array Processed pattern.
+ */
+function _lotame_adv_tags_process_multi_value_fields($pattern, &$values) {
+  $processed = array();
+  $dfp_target_patterns = _lotame_adv_tags_get_dfp_targeting_regex();
+
+  foreach ($values as $target => &$value) {
+    // Add one entry for each target that has multiple values.
+    if (is_array($value)) {
+      foreach ($value as $key => $item) {
+        // Replace the target with multiple values.
+        $tag = str_replace('{' . $target . '}', trim($item), $pattern);
+
+        // Replace other dfp tokens.
+        $tag = preg_replace($dfp_target_patterns, _lotame_adv_tags_get_dfp_targeting(), $tag);
+
+        $processed[] = _lotame_adv_tags_build_tag($tag);
+      }
+      // After processing all values, remove the target from the list of values.
+      unset($values[$target]);
+    }
+  }
+
+  return $processed;
+}
+
+/**
+ * Helper to get custom dfp tokens from the pattern. i.e. {article}.
+ *
+ * @param $pattern The pattern.
+ *
+ * @return mixed The tokens if found or NULL.
+ */
+function _lotame_adv_tags_get_dfp_tokens($pattern) {
+  preg_match_all('/{([a-zA-Z0-9-]+)}/', $pattern, $matches);
+
+  if (isset($matches[1])) {
+    return $matches[1];
+  }
+}
