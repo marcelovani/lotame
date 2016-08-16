@@ -11,18 +11,18 @@ function lotame_adv_tags_preprocess_html(&$vars) {
   $client_id = lotame_get_client_id();
 
   if (!empty($client_id) && lotame_visibility_pages()) {
-    // Load default patterns. //@todo create UI with storage for this.
-    $patterns = module_invoke_all('lotame_adv_tags_default_patterns');
+    // Load default tags. //@todo create UI with storage for this.
+    $tags = module_invoke_all('lotame_adv_tags_default_tags');
 
-    // Allow modules to alter the patterns and add some extra logic if needed.
-    drupal_alter('lotame_adv_tags_default_patterns', $patterns);
+    // Allow modules to alter the tags and add some extra logic if needed.
+    drupal_alter('lotame_adv_tags_default_tags', $tags);
 
-    if (empty($patterns)) {
+    if (empty($tags)) {
       return;
     }
 
-    // Process patterns.
-    $tags = _lotame_adv_tags_process_patterns($patterns);
+    // Process tags.
+    $tags = _lotame_adv_tags_process_tags($tags);
     $tags = _lotame_adv_tags_render_tokens($tags);
     $tags = array_unique($tags);
     sort($tags);
@@ -51,41 +51,41 @@ function lotame_adv_tags_module_implements_alter(&$implementations, $hook) {
 }
 
 /**
- * Renders patterns.
+ * Renders tags.
  *
- * @param $patterns The Lotame adv tags patterns.
+ * @param $tags The Lotame adv tags tags.
  *
  * @return array Lotame adv tags.
  */
-function _lotame_adv_tags_process_patterns($patterns) {
+function _lotame_adv_tags_process_tags($tags) {
   $client_id = lotame_get_client_id();
-  $tags = array();
-  $multi_value_patterns = array();
-  foreach ($patterns as $pattern) {
+  $processed_tags = array();
+  $multi_value_tags = array();
+  foreach ($tags as $tag) {
     // Check if there is any multi-value field.
-    if ($multi_value_tokens = _lotame_adv_tags_pattern_has_multi_value_tokens($pattern)) {
+    if ($multi_value_tokens = _lotame_adv_tags_tag_has_multi_value_tokens($tag)) {
       $keys = array_keys($multi_value_tokens);
       $token = reset($keys);
       foreach ($multi_value_tokens[$token] as $value) {
-        $multi_value_patterns[] = str_replace($token, trim($value), $pattern);
+        $multi_value_tags[] = str_replace($token, trim($value), $tag);
       }
       // Multi-value fields will be processed after.
       continue;
     }
 
-    $behaviour_type = 'ctax'; //@todo get this setting from the pattern config.
-    $tag = "_cc" . $client_id . ".add('" . $behaviour_type . "', '" . $pattern . "');";
+    $behaviour_type = 'ctax'; //@todo get this setting from the tag config.
+    $js_tag = "_cc" . $client_id . ".add('" . $behaviour_type . "', '" . $tag . "');";
 
-    array_push($tags, $tag);
+    array_push($processed_tags, $js_tag);
   }
 
   // Process multi-value fields.
-  if (!empty($multi_value_patterns)) {
-    $multi_value_tags = _lotame_adv_tags_process_patterns($multi_value_patterns);
-    $tags = array_merge($tags, $multi_value_tags);
+  if (!empty($multi_value_tags)) {
+    $multi_value_tags = _lotame_adv_tags_process_tags($multi_value_tags);
+    $processed_tags = array_merge($processed_tags, $multi_value_tags);
   }
 
-  return array_unique($tags);
+  return array_unique($processed_tags);
 }
 
 /**
@@ -117,7 +117,7 @@ function _lotame_adv_tags_render_tokens($tags) {
  *
  * @return array keyed array with tokens and the respective values.
  */
-function _lotame_adv_tags_pattern_has_multi_value_tokens($str) {
+function _lotame_adv_tags_tag_has_multi_value_tokens($str) {
   $multi_value_tokens = array();
   $tokens = _lotame_adv_tags_get_multi_value_tokens($str);
 
@@ -154,7 +154,7 @@ function _lotame_adv_tags_get_tokens($str) {
 /**
  * Helper to find tokens that multiple values.
  *
- * @param $pattern
+ * @param $tag
  *
  * @return array List of tokens.
  */

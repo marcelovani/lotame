@@ -7,22 +7,22 @@ Crowd Control for example.
 
 To add Crowd control tags to the page follow this example:
 
-function hook_lotame_adv_tags_default_patterns() {
+function hook_lotame_adv_tags_default_tags() {
 
-  $patterns = array(
+  $tags = array(
     'global' => 'Custom^Technology^Site^^[site:name]',
     'term_pages' => 'Custom^Technology^Term^^[term:name]',
   );
 
-  return $patterns;
+  return $tags;
 }
 
 If you want to add or remove tags depending on the page:
-function hook_lotame_adv_tags_default_patterns_alter(&$patterns) {
+function hook_lotame_adv_tags_default_tags_alter(&$tags) {
   $menu = menu_get_item();
 
-  // Remove term_pages pattern from taxonomy pages.
+  // Remove term_pages tag from taxonomy pages.
   if ($menu['map'][0] != 'taxonomy') {
-    unset($patterns['global']);
+    unset($tags['global']);
   }
 }
