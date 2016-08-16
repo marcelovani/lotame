@@ -12,7 +12,7 @@
 function hook_lotame_adv_tags_default_patterns() {
   $patterns = array(
     // You can use text and drupal tokens.
-    'global' => 'Custom^Technology^site^^[site:name]',
+    'global' => 'Custom^Technology^Site^^[site:name]',
   );
 
   return $patterns;

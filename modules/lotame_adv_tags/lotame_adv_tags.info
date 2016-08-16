@@ -1,5 +1,5 @@
 name =  Lotame Advanced Tags
-description = Extends Lotame funcionalities . Works with DFP targetting.
+description = Extends Lotame funcionalities.
 core = 7.x
 package = Advertising
 dependencies[] = lotame
