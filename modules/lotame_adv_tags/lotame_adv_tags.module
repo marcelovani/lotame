@@ -24,6 +24,7 @@ function lotame_adv_tags_preprocess_html(&$vars) {
     // Process patterns.
     $tags = _lotame_adv_tags_process_patterns($patterns);
     $tags = _lotame_adv_tags_render_tokens($tags);
+    $tags = array_unique($tags);
     sort($tags);
 
     $options = array(
@@ -97,7 +98,7 @@ function _lotame_adv_tags_process_patterns($patterns) {
 function _lotame_adv_tags_render_tokens($tags) {
   foreach ($tags as $key => &$tag) {
     // Token replace for global tokens.
-    $tag = token_replace($tag, lotame_get_token_data(), array('clear' => FALSE));
+    $tag = token_replace($tag, lotame_get_token_data(), ['clear' => FALSE, 'sanitize' => FALSE]);
 
     // If any token did not get rendered, remove the tag.
     if (_lotame_adv_tags_get_tokens($tag)) {
@@ -126,7 +127,7 @@ function _lotame_adv_tags_pattern_has_multi_value_tokens($str) {
     $values = explode(',', $value);
 
     if (is_array($values) && sizeof($values) > 1) {
-      $multi_value_tokens[$token] = $values;
+      $multi_value_tokens[$token] = array_filter($values);
     }
   }
 

@@ -124,6 +124,7 @@ function _lotame_get_script_url() {
 
   // Swap Client ID token.
   $url = str_replace('[ID]', lotame_get_client_id(), $url);
+
   return $url;
 }
 
