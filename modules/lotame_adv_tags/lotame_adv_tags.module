@@ -39,18 +39,6 @@ function lotame_adv_tags_preprocess_html(&$vars) {
 }
 
 /**
- * Implements hook_module_implements_alter().
- */
-function lotame_adv_tags_module_implements_alter(&$implementations, $hook) {
-  // Make lotame_adv_tags run last.
-  if ($hook == 'dfp_global_targeting_alter') {
-    $group = $implementations['lotame_adv_tags'];
-    unset($implementations['lotame_adv_tags']);
-    $implementations['lotame_adv_tags'] = $group;
-  }
-}
-
-/**
  * Renders tags.
  *
  * @param $tags The Lotame adv tags tags.
