@@ -8,8 +8,8 @@
  * Implements hook_uninstall().
  */
 function lotame_uninstall() {
-  drupal_variable_del('lotame_client_id');
-  drupal_variable_del('lotame_url');
-  drupal_variable_del('lotame_visibility');
-  drupal_variable_del('lotame_pages');
+  variable_del('lotame_client_id');
+  variable_del('lotame_url');
+  variable_del('lotame_visibility');
+  variable_del('lotame_pages');
 }
